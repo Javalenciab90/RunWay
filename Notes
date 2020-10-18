@@ -1,0 +1,115 @@
+
+NOTES ABOUT MAPVIEW
+
+class TrackingFragment {
+
+/*	
+- Reason for why I'm using a MapView (in xml file) instead of MapFragment:
+
+	MapFragment -> has a MapView inside of a Fragment
+	MapView -> can put inside of a fragment, in this case our TrackingFragment
+				to avoid create a Fragment inside another Fragment.
+	Also beacuse our MapView has his own lifecycle
+*/
+
+//- We need to call each Lifecycle functions from our MapView:
+
+	private var map: GoogleMap? = null
+
+	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+     
+        mapView.onCreate(savedInstanceState)
+
+        // Load the map on our map object.
+        mapView.getMapAsync {
+            map = it
+        }
+    }	
+    // we call the function of lifecycle: 
+     override fun onResume(), override fun onStart(), override fun onPause(),
+     override fun onLowMemory(),   override fun onSaveInstanceState {
+
+        mapView?.onResume(), 
+        mapView?.onStart(),
+        mapView?.onPause(),
+        mapView?.onLowMemory(),
+        mapView?.onSaveInstanceState(outState)
+    }
+
+    private fun sendComandService() {...}
+}
+
+
+/***************************************************************************************/
+
+NOTES ABOUT TRACKING SERVICE
+
+// Inheritance from LifecycleService to observe from lividata object inside this Service class
+
+class TrackingService : LifecycleService() {
+
+
+	onStartCommand() -> 
+	// this method is called when the service is satarted by another component.
+	// Here is when we send an intent with an action attached to this service class.
+	// In this case we have 3 potential actions to want to send to our service:
+		//Start and Resume, Paused and Stop the service.
+	
+	the comand is sending by TrackingFragment function sendComandService() with an Intent action.
+	// there we pass an action(Start and Resume, Paused and Stop the service).
+}
+
+// In our Manifest file we have to put the service.
+	<service android:name=".services.TrackingService"
+		android:forengroundServiceType="location"/>
+
+
+// Start our FORENGROUND SERVICE
+/* Making our service as Forenground_Service(F_S): This option is best than Background_Service(B_S)
+	because with B_S the system (android) can kill our service if it needs memory for something else.
+	while with F_S the system CAN NOT kill our service, it thinks the Service is like an activity on background.
+	So this is to prevent when the user is using the app and in middle of running and tracking the system
+	can not kill the proccess.
+	- Also you can use a notification to let the user know is running the app without open it.
+*/
+
+with function startForegroundService() -> This function is for set the notification and put the 
+pendingIntent (with getMainPendingIntent() funtion) to navigate to TrackingFragment each time we click on Notification.
+
+// NOTIFICATION 
+
+    const val NOTIFICATION_CHANNEL_ID = "tracking_channel"
+    const val NOTIFICATION_CHANNEL_NAME = "tracking"
+    const val NOTIFICATION_ID = 1   // Must be different to 0.
+
+	val channel = NotificationChannel(
+		NOTIFICATION_CHANNEL_ID,
+		NOTIFICATION_CHANNEL_NAME,
+		IMPOTANCE_LOW
+	)
+
+	IMPORTANCE_LOW -> To avoid the sound notification, because each second we send a tracking coordinates.
+					  is anoying that sounds every second for users.
+
+
+
+
+
+- Add an global action in nav_graph to go from Notification to TrackingFragment
+
+const val ACTION_SHOW_TRACKING_FRAGMENT = "ACTION_SHOW_TRACKING_FRAGMENT"
+- Add function navigateTrackingFragmentifNeeded() to decide each time we click on notification
+  go to TrackingFragment based on ACTION_SHOW_TRACKING_FRAGMET action.
+
+
+POLYLINES Of POLYLINE -> this is when I pause the tracking and start again we have to create a list of different polylines
+			 and put together to draw the whole route.
+
+
+
+
+
+
+
+

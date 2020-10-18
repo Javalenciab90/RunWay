@@ -22,6 +22,7 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         mapView.onCreate(savedInstanceState)
 
         btnToggleRun.setOnClickListener {
@@ -37,7 +38,6 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
             it.action = action
             requireActivity().startService(it)
         }
-
 
     override fun onResume() {
         super.onResume()
@@ -63,6 +63,5 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
         super.onSaveInstanceState(outState)
         mapView?.onSaveInstanceState(outState)
     }
-
 
 }
