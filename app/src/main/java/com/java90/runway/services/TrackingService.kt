@@ -40,6 +40,8 @@ import timber.log.Timber
 
 /*
     Connection between Service and Activity
+    Tracking location of user
+    Making the polyline to saw in the map.
 */
 
 typealias Polyline = MutableList<LatLng>
