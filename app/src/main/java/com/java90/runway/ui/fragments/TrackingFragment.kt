@@ -15,6 +15,7 @@ import com.java90.runway.other.Constants.ACTION_START_OR_RESUME_SERVICE
 import com.java90.runway.other.Constants.MAP_ZOOM
 import com.java90.runway.other.Constants.POLYLINE_COLOR
 import com.java90.runway.other.Constants.POLYLINE_WIDTH
+import com.java90.runway.other.TrackingUtility
 import com.java90.runway.services.Polyline
 import com.java90.runway.services.TrackingService
 import com.java90.runway.ui.viewmodels.MainViewModel
@@ -28,6 +29,7 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
 
     private var isTracking = false
     private var pathPoints = mutableListOf<Polyline>()
+    private var curTimeInMillis = 0L
 
     private var map: GoogleMap? = null
 
@@ -59,6 +61,14 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
                 pathPoints = it
                 addLatestPolyline()
                 moveCameraToUser()
+            }
+        )
+
+        TrackingService.timeRunInMillis.observe(viewLifecycleOwner,
+            Observer{
+                curTimeInMillis = it
+                val formattedTime = TrackingUtility.getFormattedStopWatchTime(it, true)
+                tvTimer.text = formattedTime
             }
         )
     }

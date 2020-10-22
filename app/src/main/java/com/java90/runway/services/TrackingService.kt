@@ -33,9 +33,14 @@ import com.java90.runway.other.Constants.LOCATION_UPDATE_INTERVAL
 import com.java90.runway.other.Constants.NOTIFICATION_CHANNEL_ID
 import com.java90.runway.other.Constants.NOTIFICATION_CHANNEL_NAME
 import com.java90.runway.other.Constants.NOTIFICATION_ID
+import com.java90.runway.other.Constants.TIMER_UPDATE_INTERVAL
 import com.java90.runway.other.TrackingUtility
 import com.java90.runway.services.Polyline
 import com.java90.runway.ui.MainActivity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /*
@@ -50,10 +55,11 @@ typealias Polylines = MutableList<Polyline>
 class TrackingService : LifecycleService() {
 
     private var isFirstRun = true
-
     lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+    private val timeRunInSeconds = MutableLiveData<Long>()
 
     companion object {
+        val timeRunInMillis = MutableLiveData<Long>()
         val isTracking = MutableLiveData<Boolean>()
         val pathPoints = MutableLiveData<Polylines>()
     }
@@ -69,9 +75,14 @@ class TrackingService : LifecycleService() {
         postInitialValues()
         fusedLocationProviderClient = FusedLocationProviderClient(this)
 
-        isTracking.observe(this, Observer {
-            updateLocationTracking(it)
-        })
+        isTracking.observe(this,
+                Observer {
+                updateLocationTracking(it)
+                }
+        )
+
+        timeRunInMillis.postValue(0L)
+        timeRunInSeconds.postValue(0L)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -83,8 +94,7 @@ class TrackingService : LifecycleService() {
                         isFirstRun = false
                     }else {
                         Timber.d("Resuming service....")
-                        // just for now while testing the tracking draw in map
-                        startForegroundService()
+                        startTimer()
                     }
                 }
                 ACTION_PAUSE_SERVICE -> {
@@ -98,9 +108,34 @@ class TrackingService : LifecycleService() {
         }
         return super.onStartCommand(intent, flags, startId)
     }
+    private var isTimerEnable = false
+    private var lapTime = 0L
+    private var timeRun = 0L
+    private var timeStarted = 0L
+    private var lasSecondTimestamp = 0L
+
+    private fun startTimer() {
+        addEmptyPolyline()
+        isTracking.postValue(true)
+        timeStarted = System.currentTimeMillis()
+        isTimerEnable = true
+        CoroutineScope(Dispatchers.IO).launch {
+            while(isTracking.value!!) {
+                lapTime = System.currentTimeMillis() - timeStarted
+                timeRunInMillis.postValue(timeRun+lapTime)
+                if(timeRunInMillis.value!! >= lasSecondTimestamp+1000L) {
+                    timeRunInSeconds.postValue(timeRunInSeconds.value!! + 1)
+                    lasSecondTimestamp += 1000L
+                }
+                delay(TIMER_UPDATE_INTERVAL)
+            }
+            timeRun += lapTime
+        }
+    }
 
     private fun pauseService() {
         isTracking.postValue(false)
+        isTimerEnable = false
     }
 
     @SuppressLint("MissingPermission")
@@ -154,7 +189,7 @@ class TrackingService : LifecycleService() {
     } ?: pathPoints.postValue(mutableListOf(mutableListOf()))
 
     private fun startForegroundService() {
-
+        startTimer()
         addEmptyPolyline()
         isTracking.postValue(true)
 
