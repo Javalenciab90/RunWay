@@ -33,15 +33,15 @@ object TrackingUtility {
         val seconds = TimeUnit.MILLISECONDS.toSeconds(milliseconds)
 
         if(!includeMillis) {
-            return "${if(hour < 10) "0" else ""}$hour"+
-                    "${if(minutes < 10) "0" else ""}$minutes"+
+            return "${if(hour < 10) "0" else ""}$hour:"+
+                    "${if(minutes < 10) "0" else ""}$minutes:"+
                     "${if(seconds < 10) "0" else ""}$seconds"
         }
         milliseconds -= TimeUnit.SECONDS.toMillis(seconds)
         milliseconds /= 10
-        return "${if(hour < 10) "0" else ""}$hour"+
-                "${if(minutes < 10) "0" else ""}$minutes"+
-                "${if(seconds < 10) "0" else ""}$seconds"+
+        return "${if(hour < 10) "0" else ""}$hour:"+
+                "${if(minutes < 10) "0" else ""}$minutes:"+
+                "${if(seconds < 10) "0" else ""}$seconds:"+
                 "${if(milliseconds < 10) "0" else ""}$milliseconds"
     }
 }

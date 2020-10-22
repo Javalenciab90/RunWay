@@ -67,11 +67,12 @@ class TrackingService : LifecycleService() {
     private fun postInitialValues() {
         isTracking.postValue(false)
         pathPoints.postValue(mutableListOf())
+        timeRunInSeconds.postValue(0L)
+        timeRunInMillis.postValue(0L)
     }
 
     override fun onCreate() {
         super.onCreate()
-
         postInitialValues()
         fusedLocationProviderClient = FusedLocationProviderClient(this)
 
@@ -80,9 +81,6 @@ class TrackingService : LifecycleService() {
                 updateLocationTracking(it)
                 }
         )
-
-        timeRunInMillis.postValue(0L)
-        timeRunInSeconds.postValue(0L)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -119,7 +117,7 @@ class TrackingService : LifecycleService() {
         isTracking.postValue(true)
         timeStarted = System.currentTimeMillis()
         isTimerEnable = true
-        CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(Dispatchers.Main).launch {
             while(isTracking.value!!) {
                 lapTime = System.currentTimeMillis() - timeStarted
                 timeRunInMillis.postValue(timeRun+lapTime)
