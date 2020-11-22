@@ -35,13 +35,14 @@ import com.java90.runway.other.Constants.NOTIFICATION_CHANNEL_NAME
 import com.java90.runway.other.Constants.NOTIFICATION_ID
 import com.java90.runway.other.Constants.TIMER_UPDATE_INTERVAL
 import com.java90.runway.other.TrackingUtility
-import com.java90.runway.services.Polyline
 import com.java90.runway.ui.MainActivity
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import javax.inject.Inject
 
 /*
     Connection between Service and Activity
@@ -52,10 +53,16 @@ import timber.log.Timber
 typealias Polyline = MutableList<LatLng>
 typealias Polylines = MutableList<Polyline>
 
-class TrackingService : LifecycleService() {
+@AndroidEntryPoint
+class TrackingService() : LifecycleService() {
+
+    @Inject
+    lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+
+    @Inject
+    lateinit var baseNotificationBuilder : NotificationCompat.Builder
 
     private var isFirstRun = true
-    lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private val timeRunInSeconds = MutableLiveData<Long>()
 
     companion object {
@@ -198,25 +205,8 @@ class TrackingService : LifecycleService() {
             createNotificationChannel(notificationManager)
         }
 
-        val notificationBuilder = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-            .setAutoCancel(false) // to avoid with one click the notification disappear
-            .setOngoing(true)     //  notification can't be swipe away
-            .setSmallIcon(R.drawable.ic_directions_run_black_24dp)
-            .setContentTitle("RunWay App")
-            .setContentText("00:00:00")
-            .setContentIntent(getMainActivityPendingIntent())
-
-        startForeground(NOTIFICATION_ID, notificationBuilder.build())
+        startForeground(NOTIFICATION_ID, baseNotificationBuilder.build())
     }
-
-    private fun getMainActivityPendingIntent() = PendingIntent.getActivity(
-        this,
-        0,
-        Intent(this, MainActivity::class.java).also {
-            it.action = ACTION_SHOW_TRACKING_FRAGMENT
-        },
-        FLAG_UPDATE_CURRENT
-    )
 
     @RequiresApi(O)
     private fun createNotificationChannel(notificationManager: NotificationManager) {
