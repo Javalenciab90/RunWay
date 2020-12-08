@@ -65,6 +65,7 @@ class TrackingService() : LifecycleService() {
     lateinit var curNotificationBuilder: NotificationCompat.Builder
 
     private var isFirstRun = true
+    private var serviceKilled = false
     private val timeRunInSeconds = MutableLiveData<Long>()
 
     companion object {
@@ -93,6 +94,15 @@ class TrackingService() : LifecycleService() {
         })
     }
 
+    private fun killService() {
+        serviceKilled = true
+        isFirstRun = true
+        pauseService()
+        postInitialValues()
+        stopForeground(true)
+        stopSelf()
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         intent?.let {
             when(it.action) {
@@ -111,6 +121,7 @@ class TrackingService() : LifecycleService() {
                 }
                 ACTION_STOP_SERVICE -> {
                     Timber.d("Stop service")
+                    killService()
                 }
             }
         }
@@ -167,9 +178,11 @@ class TrackingService() : LifecycleService() {
             isAccessible = true
             set(curNotificationBuilder, ArrayList<NotificationCompat.Action>())
         }
-        curNotificationBuilder = baseNotificationBuilder
-            .addAction(R.drawable.ic_pause_black_24dp, notificationActionText, pendingIntent)
-        notificationManager.notify(NOTIFICATION_ID, curNotificationBuilder.build())
+        if (!serviceKilled) {
+            curNotificationBuilder = baseNotificationBuilder
+                .addAction(R.drawable.ic_pause_black_24dp, notificationActionText, pendingIntent)
+            notificationManager.notify(NOTIFICATION_ID, curNotificationBuilder.build())
+        }
     }
 
     @SuppressLint("MissingPermission")
@@ -236,14 +249,13 @@ class TrackingService() : LifecycleService() {
 
         startForeground(NOTIFICATION_ID, baseNotificationBuilder.build())
 
-        timeRunInSeconds.observe(this,
-            Observer {
+        timeRunInSeconds.observe(this, Observer {
+            if (!serviceKilled) {
                 val notification = curNotificationBuilder
-                    .setContentText(TrackingUtility.getFormattedStopWatchTime(it*1000L))
-
+                    .setContentText(TrackingUtility.getFormattedStopWatchTime(it * 1000L))
                 notificationManager.notify(NOTIFICATION_ID, notification.build())
             }
-        )
+        })
     }
 
     @RequiresApi(O)
