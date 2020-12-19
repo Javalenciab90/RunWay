@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import android.view.View
+import android.widget.AdapterView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
@@ -12,6 +13,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.java90.runway.R
 import com.java90.runway.other.Constants.REQUEST_CODE_LOCATION_PERMISSION
+import com.java90.runway.other.SortType
 import com.java90.runway.other.TrackingUtility
 import com.java90.runway.ui.adapters.RunAdapter
 import com.java90.runway.ui.viewmodels.MainViewModel
@@ -33,7 +35,19 @@ class RunFragment : Fragment(R.layout.fragment_run), EasyPermissions.PermissionC
         requestPermissions()
         setUpRecyclerView()
 
-        viewModel.runsSortedByDate.observe(viewLifecycleOwner, Observer {
+        spFilter.setSelection(viewModel.sortType.ordinal)
+
+        spFilter.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                viewModel.sortRuns(SortType.values()[position])
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) { }
+        }
+
+
+        viewModel.runs.observe(viewLifecycleOwner, Observer {
             runAdapter.submitList(it)
         })
 

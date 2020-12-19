@@ -39,7 +39,7 @@ class RunAdapter : RecyclerView.Adapter<RunAdapter.RunViewHolder>() {
                 tvDate.text = dateFormat.format(calendar.time)
 
                 val avgSpeed = "${run.avgSpeedInKMH}km/h"
-                tvDistance.text = avgSpeed
+                tvAvgSpeed.text = avgSpeed
 
                 val distanceInKm = "${run.distanceInMeters/1000f}km"
                 tvDistance.text = distanceInKm
